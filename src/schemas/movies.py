@@ -46,7 +46,7 @@ class MovieListItemSchema(BaseModel):
     overview: str
 
     class Config:
-        from_attribute = True
+        from_attributes = True
 
 
 class MovieListResponseSchema(BaseModel):
@@ -57,7 +57,7 @@ class MovieListResponseSchema(BaseModel):
     total_items: int
 
     class Config:
-        from_attribute = True
+        from_attributes = True
 
 
 class MovieCreateSchema(BaseModel):
@@ -74,7 +74,7 @@ class MovieCreateSchema(BaseModel):
     languages: List[str]
 
     class Config:
-        from_attribute = True
+        from_attributes = True
 
     @field_validator("date")
     def validate_data(cls, value: date) -> date:  # noqa N805
@@ -117,4 +117,4 @@ class MovieUpdateSchema(BaseModel):
     revenue: Optional[float] = Field(None, ge=0)
 
     class Config:
-        from_attribute = True
+        from_attributes = True

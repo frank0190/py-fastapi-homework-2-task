@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status, Response
 from sqlalchemy import select, func
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -165,7 +165,7 @@ async def movie_delete(movie_id: int, db: AsyncSession = Depends(get_db)):
         raise HTTPException(status_code=404, detail="Movie with the given ID was not found.")
     await db.delete(movie)
     await db.commit()
-    return {"detail": "Movie delete successfully"}
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.patch("/movies/{movie_id}/")
