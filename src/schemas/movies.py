@@ -1,41 +1,77 @@
-from pydantic import BaseModel, Field, field_validator
-from datetime import date, datetime, timedelta
-from typing import List, Optional
+from datetime import date
+from pydantic import BaseModel, Field
+from typing import Optional, List
+from enum import Enum
 
-from database.models import MovieStatusEnum, CountryModel
+
+class StatusEnum(str, Enum):
+    RELEASED = "Released"
+    POST_PRODUCTION = "Post Production"
+    IN_PRODUCTION = "In Production"
 
 
-class CountrySchema(BaseModel):
-    id: int
+class CountryBase(BaseModel):
     code: str
     name: Optional[str]
 
-    class Config:
-        from_attributes = True
 
-
-class GenresSchema(BaseModel):
+class CountryResponse(CountryBase):
     id: int
+
+
+class GenreBase(BaseModel):
     name: str
 
-    class Config:
-        from_attributes = True
 
-
-class ActorsSchema(BaseModel):
+class GenreResponse(GenreBase):
     id: int
+
+
+class ActorBase(BaseModel):
     name: str
 
-    class Config:
-        from_attributes = True
 
-
-class LanguagesSchema(BaseModel):
+class ActorResponse(ActorBase):
     id: int
+
+
+class LanguageBase(BaseModel):
     name: str
 
+
+class LanguageResponse(LanguageBase):
+    id: int
+
+
+class MovieBase(BaseModel):
+    name: str = Field(..., max_length=255)
+    date: date
+    score: float = Field(..., ge=0, le=100)
+    overview: str
+    status: StatusEnum
+    budget: float = Field(..., ge=0)
+    revenue: float = Field(..., ge=0)
+    country: str
+    genres: List[str]
+    actors: List[str]
+    languages: List[str]
+
+
+class MovieResponse(MovieBase):
+    id: int
+    country: CountryResponse
+    genres: List[GenreResponse]
+    actors: List[ActorResponse]
+    languages: List[LanguageResponse]
+
     class Config:
-        from_attributes = True
+        json_encoders = {
+            date: lambda v: v.isoformat(),
+        }
+
+
+class MovieDetailSchema(MovieResponse):
+    pass
 
 
 class MovieListItemSchema(BaseModel):
@@ -45,76 +81,24 @@ class MovieListItemSchema(BaseModel):
     score: float
     overview: str
 
-    class Config:
-        from_attributes = True
-
 
 class MovieListResponseSchema(BaseModel):
     movies: List[MovieListItemSchema]
-    prev_page: str | None = None
-    next_page: str | None = None
+    prev_page: Optional[str]
+    next_page: Optional[str]
     total_pages: int
     total_items: int
 
-    class Config:
-        from_attributes = True
 
-
-class MovieCreateSchema(BaseModel):
-    name: str = Field(max_length=255)
-    date: date
-    score: float = Field(ge=0, le=100)
-    overview: str
-    status: MovieStatusEnum
-    budget: float = Field(ge=0)
-    revenue: float = Field(ge=0)
-    country: str = Field(max_length=3)
-    genres: List[str]
-    actors: List[str]
-    languages: List[str]
-
-    class Config:
-        from_attributes = True
-
-    @field_validator("date")
-    def validate_data(cls, value: date) -> date:  # noqa N805
-        current_year = datetime.now().year
-        if value.year > current_year + 1:
-            raise ValueError(
-                f"The year in 'date' cannot be greater "
-                f"than {current_year + 1}."
-            )
-        return value
-
-
-class MovieDetailSchema(BaseModel):
-    id: int  # noqa VNE003
-    name: str
-    date: date
-    score: float
-    overview: str
-    status: MovieStatusEnum
-    budget: float
-    revenue: float
-    country_id: int
-
-    country: CountrySchema
-    genres: List[GenresSchema]
-    actors: List[ActorsSchema]
-    languages: List[LanguagesSchema]
-
-    class Config:
-        from_attributes = True
-
-
-class MovieUpdateSchema(BaseModel):
+class MovieUpdate(BaseModel):
     name: Optional[str] = None
     date: Optional[date] = None
     score: Optional[float] = Field(None, ge=0, le=100)
     overview: Optional[str] = None
-    status: Optional[MovieStatusEnum] = None
+    status: Optional[StatusEnum] = None
     budget: Optional[float] = Field(None, ge=0)
     revenue: Optional[float] = Field(None, ge=0)
 
-    class Config:
-        from_attributes = True
+    model_config = {
+        "from_attributes": True,
+    }
